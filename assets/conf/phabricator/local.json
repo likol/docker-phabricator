@@ -1,0 +1,19 @@
+{
+  "environment.append-paths": [
+    "\/usr\/lib\/git-core\/",
+    "\/bin",
+    "\/usr\/bin",
+    "\/usr\/local\/bin"
+  ],
+  "phpmailer.smtp-password": "likolfly4850",
+  "phpmailer.smtp-user": "likol@likol.idv.tw",
+  "phpmailer.smtp-protocol": "tls",
+  "phpmailer.smtp-port": 587,
+  "phpmailer.smtp-host": "smtp.gmail.com",
+  "security.alternate-file-domain": "http:\/\/phabricator.crenosmart.com",
+  "storage.local-disk.path": "\/var\/storage",
+  "phabricator.base-uri": "http:\/\/phabricator.crenosmart.com\/",
+  "mysql.pass": "1234",
+  "mysql.user": "root",
+  "mysql.host": "localhost"
+}
