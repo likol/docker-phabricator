@@ -1,14 +1,14 @@
 server {
         listen 0.0.0.0:80 default_server;
 
-        root {{Phabricator_INSTALL_DIR}}/webroot;
+        root {{PHD_HOME}}/webroot;
 
 		client_max_body_size {{NGINX_MAX_UPLOAD_SIZE}};
 		
-		access_log  /var/log/phabricator/nginx/www_access.log;
-		error_log   /var/log/phabricator/nginx/www_error.log;
+		access_log  /var/log/phd/nginx/www_access.log;
+		error_log   /var/log/phd/nginx/www_error.log;
 		
-        index index.php index.html index.htm index.nginx-debian.html;
+        index index.php;
 
         server_name _;
 

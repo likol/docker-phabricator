@@ -1,0 +1,121 @@
+#!/bin/bash
+set -e
+
+INSTALL_HOME="/opt"
+ASSETS_HOME="/opt/assets"
+PHD_HOME="${INSTALL_HOME}/phabricator"
+PHD_LOG_DIR="/var/log/phd"
+
+#建立使用者 git 並且給予sudo 指令權限
+useradd -r -s /bin/bash git
+passwd -d git
+echo "git ALL=(ALL) SETENV: NOPASSWD: /usr/bin/git-upload-pack, /usr/bin/git-receive-pack" >> /etc/sudoers
+echo "www-data ALL=(ALL) SETENV: NOPASSWD: /usr/lib/git-core/git-http-backend" >> /etc/sudoers
+
+chown git:git /opt
+cd /opt
+#克隆源碼至指定資料夾
+sudo -u git -H git clone -q --depth 1 \
+https://github.com/phacility/phabricator.git
+sudo -u git -H git clone -q --depth 1 \
+https://github.com/phacility/libphutil.git
+sudo -u git -H git clone -q --depth 1 \
+https://github.com/phacility/arcanist.git
+
+
+#移除nginx 預設站點設定
+rm -f /etc/nginx/sites-enabled/default
+
+#LOG 設定
+sed 's|^logfile=.*|logfile='"${PHD_LOG_DIR}"'/supervisor/supervisord.log ;|' -i /etc/supervisor/supervisord.conf
+sed 's|access_log /var/log/nginx/access.log;|access_log '"${PHD_LOG_DIR}"'/nginx-access.log;|' -i /etc/nginx/nginx.conf
+sed 's|error_log /var/log/nginx/error.log;|error_log '"${PHD_LOG_DIR}"'/nginx-error.log;|' -i /etc/nginx/nginx.conf
+sed 's|error_log = /var/log/php5-fpm.log|error_log = '"${PHD_LOG_DIR}"'/php5-fpm.log|' -i /etc/php5/fpm/php-fpm.conf
+sed 's|childlogdir=/var/log/supervisor|childlogdir='"${PHD_LOG_DIR}"'/supervisor|' -i /etc/supervisor/supervisord.conf
+
+#supervisord log rotation
+cat > /etc/logrotate.d/supervisord <<EOF
+${PHD_LOG_DIR}/supervisor/*.log {
+  weekly
+  missingok
+  rotate 52
+  compress
+  delaycompress
+  notifempty
+  copytruncate
+}
+EOF
+
+cat > /etc/logrotate.d/nginx <<EOF
+${PHD_LOG_DIR}/nginx/*.log {
+  weekly
+  missingok
+  rotate 52
+  compress
+  delaycompress
+  notifempty
+  copytruncate
+}
+EOF
+
+cat > /etc/logrotate.d/phd <<EOF
+${PHD_LOG_DIR}/*.log {
+  weekly
+  missingok
+  rotate 52
+  compress
+  delaycompress
+  notifempty
+  copytruncate
+}
+EOF
+
+# configure supervisor to start sshd
+mkdir -p /var/run/sshd
+
+cat > /etc/supervisor/conf.d/sshd.conf <<EOF
+[program:sshd]
+directory=/
+command=/usr/sbin/sshd -D -E ${PHD_LOG_DIR}/supervisor/%(program_name)s.log
+user=root
+autostart=true
+autorestart=true
+stdout_logfile=${PHD_LOG_DIR}/supervisor/%(program_name)s.log
+stderr_logfile=${PHD_LOG_DIR}/supervisor/%(program_name)s.log
+EOF
+
+# configure supervisord to start nginx
+cat > /etc/supervisor/conf.d/nginx.conf <<EOF
+[program:nginx]
+priority=20
+directory=/tmp
+command=/usr/sbin/nginx -g "daemon off;"
+user=root
+autostart=true
+autorestart=true
+stdout_logfile=${PHD_LOG_DIR}/supervisor/%(program_name)s.log
+stderr_logfile=${PHD_LOG_DIR}/supervisor/%(program_name)s.log
+EOF
+
+# configure supervisord to start php5-fpm
+cat > /etc/supervisor/conf.d/php5-fpm.conf <<EOF
+[program:php5-fpm]
+command = /usr/sbin/php5-fpm -F
+user=root
+autostart=true
+autorestart=true
+stdout_logfile=${PHD_LOG_DIR}/supervisor/%(program_name)s.log
+stderr_logfile=${PHD_LOG_DIR}/supervisor/%(program_name)s.log
+EOF
+
+#複製sshd 設定資源
+cp ${ASSETS_HOME}/conf/phabricator/sshd_phabricator /etc/ssh/sshd_config
+cp ${ASSETS_HOME}/conf/phabricator/phabricator-ssh-hook.sh / && chmod 0755 /phabricator-ssh-hook.sh
+#複製php 設定資源
+cp ${ASSETS_HOME}/conf/fpm/php.ini /etc/php5/fpm
+
+mv ${ASSETS_HOME}/app/init ${PHD_HOME}/
+chmod 755 ${PHD_HOME}/init
+
+apt-get purge -y --auto-remove
+rm -rf /var/lib/apt/lists/*

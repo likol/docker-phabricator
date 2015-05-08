@@ -1,0 +1,106 @@
+#!/bin/bash
+set -e
+
+INSTALL_HOME="/opt"
+ASSETS_HOME="${INSTALL_HOME}/assets"
+PHD_DATA_DIR="/var/phd"
+PHD_CONF="${ASSETS_HOME}/conf/phabricator/local.json"
+PHD_HOME="${INSTALL_HOME}/phabricator"
+PHD_LOG_DIR="/var/log/phd"
+ALLOW_HTTP_AUTH=${ALLOW_HTTP_AUTH:-true}
+PHD_HOST=${PHD_HOST:-localhost}
+PHD_EMAIL=${PHD_EMAIL:-example@example.com}
+PHD_EMAIL_REPLY_TO=${PHD_EMAIL_REPLY_TO:-noreply@example.com}
+PHD_TIMEZONE=${PHD_TIMEZONE:-UTC}
+
+NGINX_WORKERS=${NGINX_WORKERS:-1}
+NGINX_MAX_UPLOAD_SIZE=${NGINX_MAX_UPLOAD_SIZE:-20m}
+
+PHP_POST_MAX_SIZE=${PHP_POST_MAX_SIZE:-0}
+PHP_OPCACHE_MEMORY=${PHP_OPCACHE_MEMORY:-64m}
+##DB_SETTING
+
+DB_HOST=${DB_HOST}
+DB_PORT=${DB_PORT}
+DB_USER=${DB_USER}
+DB_PASS=${DB_PASS}
+if [ -n "${MYSQL_PORT_3306_TCP_ADDR}" ]; then
+  DB_HOST=${DB_HOST:-${MYSQL_PORT_3306_TCP_ADDR}}
+  DB_PORT=${DB_PORT:-${MYSQL_PORT_3306_TCP_PORT}}
+  DB_USER=${DB_USER:-root}
+  DB_PASS=${DB_PASS:-${MYSQL_ENV_MYSQL_ROOT_PASSWORD}}
+  # clear phd pid data
+  if ( mysql -u${DB_USER} -p${DB_PASS} --host ${DB_HOST} -P ${DB_PORT} -e 'use phabricator_daemon' ); then
+	mysql -u${DB_USER} -p${DB_PASS} --host ${DB_HOST} -P ${DB_PORT} -D phabricator_daemon -e "TRUNCATE TABLE daemon_logevent;TRUNCATE TABLE daemon_log;"
+  fi
+fi
+##END_DB_SETTING
+##SMTP SETTING
+
+SMTP_HOST=${SMTP_HOST:-smtp.gmail.com}
+SMTP_PORT=${SMTP_PORT:-587}
+SMTP_USER=${SMTP_USER:-}
+SMTP_PASS=${SMTP_PASS:-}
+SMTP_PROTOCOL=${SMTP_PROTOCOL:-tls}
+if [ -n "${SMTP_USER}" ]; then
+  MAIL_ADAPTER=${MAIL_ADAPTER:-PhabricatorMailImplementationPHPMailerAdapter}
+fi
+MAIL_ADAPTER=${MAIL_ADAPTER:-PhabricatorMailImplementationTestAdapter}
+
+##END_SMTP_SETTING
+
+
+#創建 log 目錄
+mkdir -m 0755 -p ${PHD_LOG_DIR}/supervisor ${PHD_LOG_DIR}/nginx && chown -R git:git ${PHD_LOG_DIR} 
+#創建 data 目錄
+mkdir -m 0755 -p "${PHD_DATA_DIR}/storage" && chown -R www-data:www-data "${PHD_DATA_DIR}/storage"
+mkdir -m 0755 -p "${PHD_DATA_DIR}/repo" && chown -R git:git "${PHD_DATA_DIR}/repo"
+
+# configure application
+sed 's,{{PHD_HOME}},'"${PHD_HOME}"',g' -i /phabricator-ssh-hook.sh
+cd /${PHD_HOME}/conf/local/
+if [ ! -f local.json ]; then
+	# copy local setting to phabricator conf dir.
+	sudo -u git cp ${PHD_CONF} ${PHD_HOME}/conf/local/
+	# rewrite
+	sudo -u git sed 's/{{MAIL_ADAPTER}}/'"${MAIL_ADAPTER}"'/g' -i local.json
+	sudo -u git sed 's/{{SMTP_PASS}}/'"${SMTP_PASS}"'/g' -i local.json
+	sudo -u git sed 's/{{SMTP_USER}}/'"${SMTP_USER}"'/g' -i local.json
+	sudo -u git sed 's/{{SMTP_PROTOCOL}}/'"${SMTP_PROTOCOL}"'/g' -i local.json
+	sudo -u git sed 's/{{SMTP_PORT}}/'"${SMTP_PORT}"'/g' -i local.json
+	sudo -u git sed 's/{{SMTP_HOST}}/'"${SMTP_HOST}"'/g' -i local.json
+	sudo -u git sed 's/{{PHD_HOST}}/'"${PHD_HOST}"'/g' -i local.json
+	sudo -u git sed 's/{{PHD_TIMEZONE}}/'"${PHD_TIMEZONE}"'/g' -i local.json
+	sudo -u git sed 's/{{DB_PASS}}/'"${DB_PASS}"'/g' -i local.json
+	sudo -u git sed 's/{{DB_USER}}/'"${DB_USER}"'/g' -i local.json
+	sudo -u git sed 's/{{DB_HOST}}/'"${DB_HOST}"'/g' -i local.json
+	sudo -u git sed 's,{{PHD_LOG_DIR}},'"${PHD_LOG_DIR}"',g' -i local.json
+	sudo -u git sed 's/{{ALLOW_HTTP_AUTH}}/'"${ALLOW_HTTP_AUTH}"'/g' -i local.json
+fi
+#end configure application
+
+#設定 nginx
+
+if [ ! -f /etc/nginx/sites-enabled/phabricator ]; then
+	cp ${ASSETS_HOME}/conf/nginx/phabricator /etc/nginx/sites-enabled
+	sudo sed 's,{{PHD_HOME}},'"${PHD_HOME}"',g' -i /etc/nginx/sites-enabled/phabricator
+	sudo sed 's/{{NGINX_MAX_UPLOAD_SIZE}}/'"${NGINX_MAX_UPLOAD_SIZE}"'/g' -i /etc/nginx/sites-enabled/phabricator
+fi
+sed 's/worker_processes .*/worker_processes '"${NGINX_WORKERS}"';/' -i /etc/nginx/nginx.conf
+
+#設定 PHP
+sed 's/{{PHP_POST_MAX_SIZE}}/'"${PHP_POST_MAX_SIZE}"'/g' -i /etc/php5/fpm/php.ini
+sed 's/{{PHP_OPCACHE_MEMORY}}/'"${PHP_OPCACHE_MEMORY}"'/g' -i /etc/php5/fpm/php.ini
+
+cd /${PHD_HOME}
+# start init database
+echo "Starting init database..."
+./bin/storage upgrade -f
+
+# start phabricator daemons
+echo "Starting Phabricator..."
+sudo -u git ./bin/phd restart
+
+# start supervisord
+echo "Starting supervisord..."
+exec /usr/bin/supervisord -n -c /etc/supervisor/supervisord.conf

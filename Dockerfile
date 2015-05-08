@@ -6,11 +6,24 @@ RUN apt-key adv --keyserver keyserver.ubuntu.com --recv 8B3981E7A6852F782CC49516
 && echo "deb http://ppa.launchpad.net/nginx/stable/ubuntu trusty main " >> /etc/apt/sources.list \
 && echo "deb http://ppa.launchpad.net/ondrej/php5-5.6/ubuntu trusty main " >> /etc/apt/sources.list \
 && apt-get update \
-&& apt-get install -y supervisor logrotate locales \
-&& nginx openssh-server mysql-client git-core \
-&& php5-fpm php5-apcu php5-mysql php5-curl python-pygments
+&& apt-get install -y nano supervisor logrotate locales \
+nginx openssh-server mysql-client git-core \
+php5-fpm php5-apcu php5-mysql php5-curl php5-gd python-pygments \
+&& update-locale LANG=C.UTF-8 LC_MESSAGES=POSIX \
+&& locale-gen en_US.UTF-8 \
+&& dpkg-reconfigure locales \
+&& rm -rf /var/lib/apt/lists/*
 
+EXPOSE 22
+EXPOSE 80
 
-sed -i 's/post_max_size = 8M/post_max_size = 32M/g' /etc/php5/fpm/php.ini
-sed -i 's/\;date.timezone =/date.timezone = Asia\/Taipei/g' /etc/php5/fpm/php.ini
-sed -i 's/\;opcache.validate_timestamps=1/opcache.validate_timestamps=0/g' /etc/php5/fpm/php.ini
+VOLUME ["/home/git/data"]
+VOLUME ["/var/log/phd"]
+
+COPY assets/ /opt/assets/
+RUN chmod 755 /opt/assets/app/install
+RUN /opt/assets/app/install
+
+WORKDIR /opt/phabricator
+
+CMD ["./init"]
