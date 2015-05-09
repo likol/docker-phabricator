@@ -1,0 +1,96 @@
+# Introduction
+* * * 
+deploy **Phabricator** via docker on few minutes
+
+
+
+#Contributing
+* * *
+If you find this image useful here's how you can help:
+* Send a Pull Request with your awesome new features and bug fixes
+
+
+
+#Installation
+* * *
+Pull the image from the docker index. This is the recommended method of installation as it is easier to update image. These builds are performed by the Docker Trusted Build service.
+
+```bash
+docker pull likol1227/phabricator
+```
+
+Alternately you can build the image locally.
+
+```bash
+git clone https://github.com/likol/docker-phabricator.git
+cd docker-phabricator
+docker build --tag $USER/phabricator
+```
+
+#Quick Start
+* * *
+simple 2 step procedure to get started.
+Step 1.Launch a mysql container
+
+```bash
+docker run -d --name mysql -e 'MYSQL_ROOT_PASSWORD=5566' likol1227/mysql
+```
+
+Step 2.Launch a phabricator container
+
+```bash
+docker run -e 'PHD_HOST=192.168.2.100' \
+-p 10080:80 -p 10022:22 \
+-v /phabricator-repo:/var/phd \
+--link mysql:mysql likol1227/phabricator
+```
+
+#Mail
+* * *
+The mail configuration should be specified using environment variables while starting the GitLab image. The configuration defaults to using gmail to send emails and requires the specification of a valid username and password to login to the gmail servers.
+
+```bash
+docker run docker run -e 'SMTP_USER=USER@gmail.com' \
+-e 'SMTP_PASS=password' \
+-e 'SMTP_HOST=smtp.gmail.com' \
+-e 'PHD_HOST=domain or ip' \
+-e 'PHP_OPCACHE_MEMORY=128m' \
+-p 80:80 -p 234:22 \
+-v /home/likol/phab-repo:/var/phd \
+--link mysql:mysql --rm -it likol1227/phabricator
+```
+#Available Configuration Parameters
+* * *
+Please refer the docker run command options for the --env-file flag where you can specify all required environment variables in a single file. This will save you from writing a potentially long docker run command. Alternately you can use fig.
+
+Below is the complete list of available options that can be used to customize your gitlab installation.
+
+* **PHD_HOST**: The hostname of the Phabricator server. Defaults to `localhost`
+
+* **PHD_TIMEZONE**:Configure the timezone for the Phabricator application. Defaults to `UTC`
+
+* **NGINX_MAX_UPLOAD_SIZE**: Maximum acceptable upload size. Defaults to `20m`.
+
+* **PHP_POST_MAX_SIZE**: Maximum acceptable post size. defaults to `0`. (no limit)
+
+* **PHP_OPCACHE_MEMORY**: Share memory for PHP OPCODE cached. Defaults to `64m`.
+
+* **DB_HOST**: For external MySQL Server. server hostname or ipaddress.
+
+* **DB_PORT**: For external MySQL Server. server port.
+
+* **DB_USER**: For external MySQL Server. server username.
+
+* **DB_PASS**: For external MySQL Server. server password.
+
+* **SMTP_HOST**: SMTP server host. Defaults to `smtp.gmail.com`.
+
+* **SMTP_PORT**: SMTP server port. Defaults to `587`.
+
+* **SMTP_USER**: SMTP server username. No defaults.
+
+* **SMTP_PASS**: SMTP server password. No defaults.
+
+* **SMTP_PROTOCOL**: SMTP server PROTOCOL. Defaults to `tls`.
+
+* **ALLOW_HTTP_AUTH**: Phabricator can serve repositories over HTTP, using HTTP basic auth. Defaults to `true`.
