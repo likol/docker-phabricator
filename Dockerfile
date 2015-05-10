@@ -17,8 +17,7 @@ php5-fpm php5-apcu php5-mysql php5-curl php5-gd python-pygments \
 EXPOSE 22
 EXPOSE 80
 
-VOLUME ["/home/git/data"]
-VOLUME ["/var/log/phd"]
+VOLUME ["/var/log/phd", "/var/phd"]
 
 COPY assets/ /opt/assets/
 RUN chmod 755 /opt/assets/app/install
