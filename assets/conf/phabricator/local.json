@@ -24,6 +24,7 @@
   "diffusion.allow-http-auth": {{ALLOW_HTTP_AUTH}},
   "diffusion.ssh-port": {{SSH_PORT}},
   "diffusion.ssh-user": "git",
+  "phabricator.timezone": "{{PHD_TIMEZONE}}",
   "log.access.path": "/var/log/phd/phd-web-access.log",
   "log.ssh.path": "/var/log/phd/phd-ssh-access.log",
   "phd.user": "git"

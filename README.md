@@ -35,6 +35,7 @@ docker build --tag $USER/phabricator .
 * * *
 
 simple 2 step procedure to get started.
+
 Step 1.Launch a mysql container
 
 ```bash
@@ -66,14 +67,13 @@ docker run --name phab \
 
 #Mail
 * * *
-The mail configuration should be specified using environment variables while starting the GitLab image. The configuration defaults to using gmail to send emails and requires the specification of a valid username and password to login to the gmail servers.
+The mail configuration should be specified using environment variables while starting the container. The configuration defaults to using gmail to send emails and requires the specification of a valid username and password to login to the gmail servers.
 
 ```bash
 HOST=127.0.1.1
 SSH_PORT=10022
 MAIL_USER=USER@gmail.com
 MAIL_PASS=password
-MAIL_HOST=smtp.gmail.com
 LOCAL_STORAGE=/var/phabricator
 LOCAL_LOG=/var/log/phd
 

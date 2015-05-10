@@ -71,7 +71,7 @@ if [ ! -f local.json ]; then
 	sudo -u git sed 's/{{SMTP_PORT}}/'"${SMTP_PORT}"'/g' -i local.json
 	sudo -u git sed 's/{{SMTP_HOST}}/'"${SMTP_HOST}"'/g' -i local.json
 	sudo -u git sed 's/{{PHD_HOST}}/'"${PHD_HOST}"'/g' -i local.json
-	sudo -u git sed 's/{{PHD_TIMEZONE}}/'"${PHD_TIMEZONE}"'/g' -i local.json
+	sudo -u git sed 's,{{PHD_TIMEZONE}},'"${PHD_TIMEZONE}"',g' -i local.json
 	sudo -u git sed 's/{{DB_PASS}}/'"${DB_PASS}"'/g' -i local.json
 	sudo -u git sed 's/{{DB_USER}}/'"${DB_USER}"'/g' -i local.json
 	sudo -u git sed 's/{{DB_HOST}}/'"${DB_HOST}"'/g' -i local.json
