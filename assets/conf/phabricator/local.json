@@ -22,6 +22,7 @@
   "repository.default-local-path": "/var/phd/repo",
   "pygments.enabled": true,
   "diffusion.allow-http-auth": {{ALLOW_HTTP_AUTH}},
+  "diffusion.ssh-port": {{SSH_PORT}},
   "diffusion.ssh-user": "git",
   "log.access.path": "/var/log/phd/phd-web-access.log",
   "log.ssh.path": "/var/log/phd/phd-ssh-access.log",

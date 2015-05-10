@@ -13,6 +13,7 @@ PHD_EMAIL=${PHD_EMAIL:-example@example.com}
 PHD_EMAIL_REPLY_TO=${PHD_EMAIL_REPLY_TO:-noreply@example.com}
 PHD_TIMEZONE=${PHD_TIMEZONE:-UTC}
 
+SSH_PORT=${SSH_PORT:-22}
 NGINX_WORKERS=${NGINX_WORKERS:-1}
 NGINX_MAX_UPLOAD_SIZE=${NGINX_MAX_UPLOAD_SIZE:-20m}
 
@@ -76,6 +77,7 @@ if [ ! -f local.json ]; then
 	sudo -u git sed 's/{{DB_HOST}}/'"${DB_HOST}"'/g' -i local.json
 	sudo -u git sed 's,{{PHD_LOG_DIR}},'"${PHD_LOG_DIR}"',g' -i local.json
 	sudo -u git sed 's/{{ALLOW_HTTP_AUTH}}/'"${ALLOW_HTTP_AUTH}"'/g' -i local.json
+	sudo -u git sed 's/{{SSH_PORT}}/'"${SSH_PORT}"'/g' -i local.json
 fi
 #end configure application
 
