@@ -92,7 +92,7 @@ docker run --name phab \
 * * *
 Please refer the docker run command options for the --env-file flag where you can specify all required environment variables in a single file. This will save you from writing a potentially long docker run command. Alternately you can use fig.
 
-Below is the complete list of available options that can be used to customize your gitlab installation.
+Below is the complete list of available options that can be used to customize your phabricator installation.
 
 * **PHD_HOST**: The hostname of the Phabricator server. Defaults to `localhost`
 
@@ -124,4 +124,15 @@ Below is the complete list of available options that can be used to customize yo
 
 * **ALLOW_HTTP_AUTH**: Phabricator can serve repositories over HTTP, using HTTP basic auth. Defaults to `true`.
 
-* **SSH_PORT**: Phabricator SSH serve port. Defaults to empty.
+* **SSH_PORT**: Phabricator SSH serve port. Defaults to `22`.
+
+#Configure Local.json
+
+If you want add some setting to your phabricator container please follow step below.
+before start , be sure your container are running.
+
+`docker exec -it phab ./bin/config set log.access.path "/var/log/phd/phd-web-access.log"`
+
+and it'll show you succeeded or failed.
+
+more configuration guide please visit official Phabricator book.

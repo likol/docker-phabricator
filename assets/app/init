@@ -51,9 +51,9 @@ MAIL_ADAPTER=${MAIL_ADAPTER:-PhabricatorMailImplementationTestAdapter}
 ##END_SMTP_SETTING
 
 
-#³Ð«Ø log ¥Ø¿ý
+#å‰µå»º log ç›®éŒ„
 mkdir -m 0755 -p ${PHD_LOG_DIR}/supervisor ${PHD_LOG_DIR}/nginx && chown -R git:git ${PHD_LOG_DIR} 
-#³Ð«Ø data ¥Ø¿ý
+#å‰µå»º data ç›®éŒ„
 mkdir -m 0755 -p "${PHD_DATA_DIR}/storage" && chown -R www-data:www-data "${PHD_DATA_DIR}/storage"
 mkdir -m 0755 -p "${PHD_DATA_DIR}/repo" && chown -R git:git "${PHD_DATA_DIR}/repo"
 
@@ -81,7 +81,7 @@ if [ ! -f local.json ]; then
 fi
 #end configure application
 
-#³]©w nginx
+#è¨­å®š nginx
 
 if [ ! -f /etc/nginx/sites-enabled/phabricator ]; then
 	cp ${ASSETS_HOME}/conf/nginx/phabricator /etc/nginx/sites-enabled
@@ -90,7 +90,7 @@ if [ ! -f /etc/nginx/sites-enabled/phabricator ]; then
 fi
 sed 's/worker_processes .*/worker_processes '"${NGINX_WORKERS}"';/' -i /etc/nginx/nginx.conf
 
-#³]©w PHP
+#è¨­å®š PHP
 sed 's/{{PHP_POST_MAX_SIZE}}/'"${PHP_POST_MAX_SIZE}"'/g' -i /etc/php5/fpm/php.ini
 sed 's/{{PHP_OPCACHE_MEMORY}}/'"${PHP_OPCACHE_MEMORY}"'/g' -i /etc/php5/fpm/php.ini
 
